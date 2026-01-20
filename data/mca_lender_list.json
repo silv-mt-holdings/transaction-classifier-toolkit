@@ -1,0 +1,33 @@
+{
+  "_comment": "MCA Lender Name Mapping - Maps official MCA company names to their bank statement appearances (AKA names)",
+  "_count": "50+ MCA lenders tracked",
+  "lenders": {
+    "Bitty Advance": ["Merchant Servicing", "MERCHANT SERVICING"],
+    "Greenbox": ["Merchant Capital", "MERCHANT CAPITAL"],
+    "Mulligan": ["Finwise", "FINWISE"],
+    "Retail Capital": ["Credibly", "CREDIBLY"],
+    "SBFS": ["Rapid", "RAPID", "SBFS"],
+    "Last Chance Funding": ["LCF", "LAST CHANCE"],
+    "Funding Metrics": ["FDM001", "FUNDING METRICS"],
+    "Biz2Credit": ["Itria Venture", "ITRIA", "B2C"],
+    "Ondeck": ["Celtic", "CELTIC", "Bluevine", "BLUEVINE", "ONDECK"],
+    "GFE Holding": ["Global Funding", "GLOBAL FUNDING", "GFE"],
+    "Capytal Com": ["NewCo Capital", "NEWCO", "CAPYTAL"],
+    "EBF": ["Everest Business Funding", "EVEREST", "EBF"],
+    "Vitalcap Fund": ["Emerald Group Funding", "EMERALD", "VITALCAP"],
+    "ACH Collec Vcg": ["Velocity Capital Group", "VELOCITY", "VCG"],
+    "FDMS": ["PYMT FDMS", "FDMS CADV PYMT", "First Data Merchant", "FIRST DATA"],
+    "Unique Funding Solution": ["UFS 7183166899", "UFS", "UNIQUE FUNDING"],
+    "Reliant Funding": ["Merchant Capital Access", "RELIANT"],
+    "Forwardline": ["Britecap", "BRITECAP", "FORWARDLINE"],
+    "PaySmith": ["PSP 866-230-0708", "PSP", "PAYSMITH"],
+    "Fintegra": ["Yes Lender", "YES LENDER", "FINTEGRA"],
+    "Toast": ["Webbank Toast", "WEBBANK TOAST", "TOAST"],
+    "National Funding": ["Quick Bridge", "NFAS2", "NF1016", "NF1017", "QUICK BRIDGE"],
+    "Flash Funding Services": ["FFS 8002017337", "FFS", "FLASH FUNDING"],
+    "Forward Financing": ["FF SPE II LLC", "FORWARD FINANCING"],
+    "GETBACKD": ["Austin Business Finance", "AUSTIN BUSINESS FINANCE, LLC", "GETBACKD"],
+    "Wellen Capital": ["Gibraltar Capital Advance", "GIBRALTAR", "WELLEN"],
+    "Premier Capital Funding": ["Fenix Capital Funding", "FENIX", "PREMIER CAPITAL"]
+  }
+}
