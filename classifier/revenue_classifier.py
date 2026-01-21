@@ -1,7 +1,7 @@
 """
 Revenue Classifier
 
-Classifies bank transactions by revenue type and detects MCA payments.
+Classifies bank transactions by revenue type and detects RBF payments.
 """
 
 import re
@@ -19,7 +19,7 @@ class RevenueType(Enum):
     TRUE_REVENUE = "true_revenue"
     NON_TRUE_REVENUE = "non_true_revenue"
     OUTLIER = "outlier"
-    MCA_PAYMENT = "mca_payment"
+    RBF_PAYMENT = "rbf_payment"
     NEEDS_REVIEW = "needs_review"
 
 
@@ -66,7 +66,7 @@ class ClassifiedTransaction(Transaction):
 
 class RevenueClassifier:
     """
-    Classifies transactions by revenue type and MCA detection.
+    Classifies transactions by revenue type and RBF detection.
     """
 
     def __init__(self, data_dir: Optional[Path] = None):
@@ -84,16 +84,16 @@ class RevenueClassifier:
 
     def _load_patterns(self):
         """Load classification patterns from JSON files"""
-        # Load MCA lenders
-        with open(self.data_dir / 'mca_lender_list.json', 'r') as f:
-            mca_data = json.load(f)
-            self.mca_names = mca_data['lenders']
+        # Load RBF lenders
+        with open(self.data_dir / 'rbf_lender_list.json', 'r') as f:
+            rbf_data = json.load(f)
+            self.rbf_names = rbf_data['lenders']
 
         # Build reverse lookup
-        self.aka_to_mca = {}
-        for mca_name, aka_list in self.mca_names.items():
+        self.aka_to_rbf = {}
+        for rbf_name, aka_list in self.rbf_names.items():
             for aka in aka_list:
-                self.aka_to_mca[aka.upper()] = mca_name
+                self.aka_to_rbf[aka.upper()] = rbf_name
 
         # Load revenue patterns
         with open(self.data_dir / 'revenue_patterns.json', 'r') as f:
@@ -152,11 +152,11 @@ class RevenueClassifier:
             classified.revenue_type = RevenueType.NON_TRUE_REVENUE
             return classified
 
-        # Check for MCA payment (withdrawal side)
-        mca_match = self._lookup_mca(desc)
-        if mca_match:
-            classified.mca_match = mca_match
-            # Don't classify as revenue if it's an MCA payment
+        # Check for RBF payment (withdrawal side)
+        rbf_match = self._lookup_rbf(desc)
+        if rbf_match:
+            classified.mca_match = rbf_match
+            # Don't classify as revenue if it's an RBF payment
             return classified
 
         # Check wire type
@@ -211,12 +211,12 @@ class RevenueClassifier:
         """
         return [self.classify(txn) for txn in transactions]
 
-    def _lookup_mca(self, description: str) -> Optional[str]:
-        """Look up MCA company from description"""
+    def _lookup_rbf(self, description: str) -> Optional[str]:
+        """Look up RBF company from description"""
         desc_upper = description.upper()
-        for aka_name, mca_name in self.aka_to_mca.items():
+        for aka_name, rbf_name in self.aka_to_rbf.items():
             if aka_name in desc_upper:
-                return mca_name
+                return rbf_name
         return None
 
     def _classify_wire(self, description: str) -> Optional[WireType]:
