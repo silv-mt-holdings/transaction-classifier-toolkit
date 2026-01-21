@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 from pathlib import Path
 
 readme_file = Path(__file__).parent / "README.md"
-long_description = readme_file.read_text() if readme_file.exists() else ""
+long_description = readme_file.read_text(encoding='utf-8') if readme_file.exists() else ""
 
 setup(
     name="transaction-classifier-toolkit",
@@ -32,7 +32,7 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "bankstatement-parser-toolkit @ git+https://github.com/silv-mt-holdings/bankstatement-parser-toolkit.git",
+        "bankstatement-parser-toolkit",
     ],
     extras_require={
         "dev": [
