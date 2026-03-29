@@ -2,15 +2,83 @@
 Revenue Classifier
 
 Classifies bank transactions by revenue type and detects RBF payments.
+
+Data source: lending_intelligence.db (SQLite) → local JSON fallback
 """
 
 import re
 import json
+import sqlite3
+from collections import defaultdict
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 from enum import Enum
 from datetime import date
+
+_HERE = Path(__file__).parent
+
+# SQLite DB search paths
+_SQLITE_SEARCH = [
+    _HERE.parent.parent / "lending-intelligence-db" / "data" / "lending_intelligence.db",
+    _HERE.parent / "data" / "lending_intelligence.db",
+]
+
+
+def _get_sqlite_conn() -> Optional[sqlite3.Connection]:
+    for path in _SQLITE_SEARCH:
+        if path.exists():
+            conn = sqlite3.connect(str(path))
+            conn.row_factory = sqlite3.Row
+            return conn
+    return None
+
+
+def _load_lenders_from_sqlite(conn: sqlite3.Connection) -> dict:
+    """Load lender data from SQLite into the canonical dict format."""
+    cur = conn.execute(
+        "SELECT ml.name, mla.alias "
+        "FROM mca_lenders ml "
+        "JOIN mca_lender_aliases mla ON ml.id = mla.lender_id "
+        "ORDER BY ml.name"
+    )
+    lenders = defaultdict(list)
+    for row in cur.fetchall():
+        lenders[row["name"]].append(row["alias"])
+    return dict(lenders) if lenders else {}
+
+
+def _load_patterns_from_sqlite(conn: sqlite3.Connection) -> dict:
+    """Load revenue patterns from SQLite into the canonical dict format."""
+    rows = conn.execute(
+        "SELECT category, pattern, sub_type FROM revenue_patterns"
+    ).fetchall()
+    if not rows:
+        return {}
+
+    result = {
+        "true_revenue_patterns": [],
+        "non_true_revenue_patterns": [],
+        "treasury_true_patterns": [],
+        "treasury_false_positive_patterns": [],
+        "zelle_venmo_patterns": [],
+        "wire_patterns": {},
+    }
+    for r in rows:
+        cat = r["category"]
+        if cat == "true_revenue":
+            result["true_revenue_patterns"].append(r["pattern"])
+        elif cat == "non_true_revenue":
+            result["non_true_revenue_patterns"].append(r["pattern"])
+        elif cat == "treasury_true":
+            result["treasury_true_patterns"].append(r["pattern"])
+        elif cat == "treasury_false_positive":
+            result["treasury_false_positive_patterns"].append(r["pattern"])
+        elif cat == "zelle_venmo":
+            result["zelle_venmo_patterns"].append(r["pattern"])
+        elif cat == "wire":
+            result["wire_patterns"][r["pattern"]] = r["sub_type"] or "unknown"
+    return result
 
 
 # Revenue and Wire type enums
@@ -83,21 +151,39 @@ class RevenueClassifier:
         self._load_patterns()
 
     def _load_patterns(self):
-        """Load classification patterns from JSON files"""
-        # Load RBF lenders
-        with open(self.data_dir / 'rbf_lender_list.json', 'r') as f:
-            rbf_data = json.load(f)
-            self.rbf_names = rbf_data['lenders']
+        """Load classification patterns — SQLite first, JSON fallback."""
+        lenders = None
+        patterns = None
 
-        # Build reverse lookup
+        # Try SQLite first
+        conn = _get_sqlite_conn()
+        if conn:
+            try:
+                lenders = _load_lenders_from_sqlite(conn)
+                patterns = _load_patterns_from_sqlite(conn)
+                conn.close()
+            except Exception:
+                conn.close()
+                lenders = None
+                patterns = None
+
+        # JSON fallback for lenders
+        if not lenders:
+            with open(self.data_dir / 'rbf_lender_list.json', 'r') as f:
+                rbf_data = json.load(f)
+                lenders = rbf_data['lenders']
+
+        # JSON fallback for patterns
+        if not patterns:
+            with open(self.data_dir / 'revenue_patterns.json', 'r') as f:
+                patterns = json.load(f)
+
+        # Store lenders and build reverse lookup
+        self.rbf_names = lenders
         self.aka_to_rbf = {}
         for rbf_name, aka_list in self.rbf_names.items():
             for aka in aka_list:
                 self.aka_to_rbf[aka.upper()] = rbf_name
-
-        # Load revenue patterns
-        with open(self.data_dir / 'revenue_patterns.json', 'r') as f:
-            patterns = json.load(f)
 
         # Compile regex patterns
         self.true_revenue_patterns = [
